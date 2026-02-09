@@ -60,7 +60,7 @@ export default function Dashboard() {
         navigate('/epis?filter=low_stock');
         break;
       case 'entregas':
-        navigate('/entrega-epi?view=history');
+        navigate('/historico-entregas?filter=last30days');
         break;
       case 'validade':
         navigate('/epis?filter=expiring');
