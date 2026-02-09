@@ -357,7 +357,7 @@ class CipolattiAPITester:
         }
         
         success, response, status = self.make_request('POST', 'suppliers', supplier_data_no_cnpj, 422)
-        self.log_result("Supplier creation without CNPJ fails", not success and status == 422, f"Expected 422, got {status}")
+        self.log_result("Supplier creation without CNPJ fails", status == 422, f"Expected 422, got {status}")
 
     def test_tools(self):
         """Test tools"""
