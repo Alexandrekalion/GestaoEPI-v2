@@ -320,11 +320,44 @@ class CipolattiAPITester:
         self.log_result("Create user", success, f"Status: {status}, Response: {response}" if not success else "")
 
     def test_suppliers(self):
-        """Test suppliers"""
+        """Test suppliers - verify CNPJ is required"""
         print("\n🏭 Testing Suppliers...")
         
         success, response, status = self.make_request('GET', 'suppliers')
         self.log_result("Get suppliers", success, f"Status: {status}" if not success else "")
+        
+        # Test supplier creation with required CNPJ
+        supplier_data = {
+            "name": "Fornecedor Teste LTDA",
+            "cnpj": "12.345.678/0001-90",  # Required field
+            "contact": "João Fornecedor",
+            "phone": "(11) 99999-9999",
+            "email": "contato@fornecedor.com"
+        }
+        
+        success, response, status = self.make_request('POST', 'suppliers', supplier_data, 200)
+        
+        if success and 'id' in response:
+            supplier_id = response['id']
+            self.log_result("Create supplier with CNPJ", True)
+            
+            # Get specific supplier
+            success, response, status = self.make_request('GET', f'suppliers/{supplier_id}')
+            self.log_result("Get specific supplier", success, f"Status: {status}" if not success else "")
+            
+        else:
+            self.log_result("Create supplier with CNPJ", False, f"Status: {status}, Response: {response}")
+            
+        # Test supplier creation without required CNPJ (should fail)
+        supplier_data_no_cnpj = {
+            "name": "Fornecedor Sem CNPJ",
+            "contact": "Maria Fornecedora",
+            "phone": "(11) 88888-8888",
+            "email": "maria@fornecedor.com"
+        }
+        
+        success, response, status = self.make_request('POST', 'suppliers', supplier_data_no_cnpj, 422)
+        self.log_result("Supplier creation without CNPJ fails", not success and status == 422, f"Expected 422, got {status}")
 
     def test_tools(self):
         """Test tools"""
