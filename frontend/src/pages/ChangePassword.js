@@ -113,16 +113,48 @@ export default function ChangePassword() {
                 data-testid="confirm-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                className={`flex h-10 w-full rounded-md border bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  confirmPassword && !passwordsMatch 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : passwordsMatch 
+                      ? 'border-emerald-500 focus:ring-emerald-500' 
+                      : 'border-slate-300 focus:ring-emerald-500'
+                }`}
                 required
                 minLength={8}
               />
+              {/* Indicador visual de erro/sucesso */}
+              {confirmPassword && (
+                <div className={`flex items-center gap-1 mt-1.5 text-sm ${
+                  passwordsMatch ? 'text-emerald-600' : 'text-red-600'
+                }`}>
+                  {passwordsMatch ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Senhas coincidem</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-4 h-4" />
+                      <span>As senhas não coincidem</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* Mensagem de erro geral */}
+            {passwordError && !confirmPassword && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{passwordError}</span>
+              </div>
+            )}
 
             <button
               type="submit"
               data-testid="change-password-submit"
-              disabled={loading}
+              disabled={loading || !canSubmit}
               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium shadow-sm rounded-md px-4 py-2.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
