@@ -37,8 +37,20 @@ export const AuthProvider = ({ children }) => {
     const response = await axios.post(`${API}/auth/login`, { username, password });
     const { access_token, must_change_password, role } = response.data;
     
-    setToken(access_token);
     localStorage.setItem('token', access_token);
+    setToken(access_token);
+    
+    // Aguardar buscar dados do usuário antes de retornar
+    if (!must_change_password) {
+      try {
+        const userResponse = await axios.get(`${API}/auth/me`, {
+          headers: { Authorization: `Bearer ${access_token}` }
+        });
+        setUser(userResponse.data);
+      } catch (error) {
+        console.error('Erro ao buscar usuário após login:', error);
+      }
+    }
     
     return { must_change_password, role };
   };
