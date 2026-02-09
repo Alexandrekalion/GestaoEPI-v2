@@ -166,11 +166,9 @@ class EmployeeCreate(BaseModel):
     cpf: str
     rg: Optional[str] = None
     birth_date: Optional[datetime] = None
-    phone: Optional[str] = None
-    email: Optional[EmailStr] = None
     address: Optional[str] = None
-    registration_number: Optional[str] = None
-    company_id: Optional[str] = None
+    registration_number: str  # Matrícula obrigatória
+    company_id: str  # Empresa obrigatória
     department: Optional[str] = None
     position: Optional[str] = None
     status: EmployeeStatus = EmployeeStatus.ACTIVE
