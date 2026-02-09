@@ -239,7 +239,7 @@ class CipolattiAPITester:
         }
         
         success, response, status = self.make_request('POST', 'employees', employee_data_no_reg, 422)
-        self.log_result("Employee creation without registration_number fails", not success and status == 422, f"Expected 422, got {status}")
+        self.log_result("Employee creation without registration_number fails", status == 422, f"Expected 422, got {status}")
         
         # Test employee creation without required company_id (should fail)
         employee_data_no_company = {
@@ -253,7 +253,7 @@ class CipolattiAPITester:
         }
         
         success, response, status = self.make_request('POST', 'employees', employee_data_no_company, 422)
-        self.log_result("Employee creation without company_id fails", not success and status == 422, f"Expected 422, got {status}")
+        self.log_result("Employee creation without company_id fails", status == 422, f"Expected 422, got {status}")
 
     def test_epis_crud(self):
         """Test EPIs CRUD operations"""
