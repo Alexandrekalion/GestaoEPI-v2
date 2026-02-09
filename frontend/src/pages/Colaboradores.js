@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Plus, Search, User, Camera, Upload, Eye, Edit2 } from 'lucide-react';
+import { Plus, Search, User, Camera, Upload, Eye, Edit2, FileDown, FileUp, FileText, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { getAuthHeader } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
