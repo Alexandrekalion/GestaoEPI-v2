@@ -17,30 +17,38 @@ export const AuthProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const fetchUser = async () => {
+    const currentToken = localStorage.getItem('token');
+    if (!currentToken) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       const response = await axios.get(`${API}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${currentToken}` }
       });
       setUser(response.data);
+      setToken(currentToken);
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
-      logout();
+      // Token inválido, fazer logout
+      localStorage.removeItem('token');
+      setToken(null);
+      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (username, password) => {
+    // Fazer login
     const response = await axios.post(`${API}/auth/login`, { username, password });
     const { access_token, must_change_password, role } = response.data;
     
-    localStorage.setItem('token', access_token);
-    setToken(access_token);
-    
-    // Aguardar buscar dados do usuário antes de retornar
+    // Verificar se o token é válido buscando dados do usuário
     if (!must_change_password) {
       try {
         const userResponse = await axios.get(`${API}/auth/me`, {
@@ -49,8 +57,14 @@ export const AuthProvider = ({ children }) => {
         setUser(userResponse.data);
       } catch (error) {
         console.error('Erro ao buscar usuário após login:', error);
+        // Se não conseguir buscar usuário, não salvar token
+        throw new Error('Erro ao validar sessão. Tente novamente.');
       }
     }
+    
+    // Só salvar token depois de tudo OK
+    localStorage.setItem('token', access_token);
+    setToken(access_token);
     
     return { must_change_password, role };
   };
@@ -62,10 +76,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const changePassword = async (oldPassword, newPassword) => {
+    const currentToken = localStorage.getItem('token');
     await axios.post(
       `${API}/auth/change-password`,
       { old_password: oldPassword, new_password: newPassword },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${currentToken}` } }
     );
     await fetchUser();
   };
