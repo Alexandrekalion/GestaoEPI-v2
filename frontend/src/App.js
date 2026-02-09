@@ -13,6 +13,7 @@ import Usuarios from '@/pages/Usuarios';
 import Configuracoes from '@/pages/Configuracoes';
 import Fornecedores from '@/pages/Fornecedores';
 import ColaboradorDetalhes from '@/pages/ColaboradorDetalhes';
+import HistoricoEntregas from '@/pages/HistoricoEntregas';
 import '@/App.css';
 
 const PrivateRoute = ({ children }) => {
