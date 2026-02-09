@@ -302,22 +302,70 @@ export default function Colaboradores() {
   return (
     <DashboardLayout>
       <div className="space-y-6" data-testid="colaboradores-page">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Colaboradores</h1>
             <p className="text-slate-600 mt-1">Gerencie os colaboradores da empresa</p>
           </div>
-          <Dialog open={showDialog} onOpenChange={setShowDialog}>
-            <DialogTrigger asChild>
-              <Button className="bg-emerald-500 hover:bg-emerald-600" data-testid="add-colaborador-button">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Colaborador
+          
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Botões de Importação/Exportação */}
+            <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-1 bg-slate-50">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={downloadTemplate}
+                className="text-slate-600 hover:text-slate-900"
+                data-testid="download-template-btn"
+                title="Baixar Template Excel"
+              >
+                <FileDown className="w-4 h-4" />
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Novo Colaborador</DialogTitle>
-              </DialogHeader>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowImportDialog(true)}
+                className="text-slate-600 hover:text-slate-900"
+                data-testid="import-excel-btn"
+                title="Importar Excel"
+              >
+                <FileUp className="w-4 h-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={exportToExcel}
+                disabled={exporting}
+                className="text-slate-600 hover:text-slate-900"
+                data-testid="export-excel-btn"
+                title="Exportar Excel"
+              >
+                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={exportToPDF}
+                disabled={exporting}
+                className="text-slate-600 hover:text-slate-900"
+                data-testid="export-pdf-btn"
+                title="Exportar PDF"
+              >
+                <FileText className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <Dialog open={showDialog} onOpenChange={setShowDialog}>
+              <DialogTrigger asChild>
+                <Button className="bg-emerald-500 hover:bg-emerald-600" data-testid="add-colaborador-button">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Colaborador
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Novo Colaborador</DialogTitle>
+                </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
