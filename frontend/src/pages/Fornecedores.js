@@ -167,13 +167,15 @@ export default function Fornecedores() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">CNPJ</label>
+                  <label className="block text-sm font-medium mb-1">CNPJ *</label>
                   <input
                     type="text"
+                    required
                     value={formData.cnpj}
                     onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
                     className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
                     placeholder="00.000.000/0000-00"
+                    data-testid="input-cnpj"
                   />
                 </div>
                 <div>
