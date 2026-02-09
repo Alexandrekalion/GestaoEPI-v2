@@ -250,24 +250,6 @@ export default function Colaboradores() {
                       className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Telefone</label>
-                    <input
-                      type="text"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-                    />
-                  </div>
                 </div>
 
                 <div className="border-t pt-4">
