@@ -123,9 +123,9 @@ export default function ChangePassword() {
                 required
                 minLength={8}
               />
-              {/* Indicador visual de erro/sucesso */}
+              {/* Indicador visual de erro/sucesso - SEMPRE visível quando há conteúdo */}
               {confirmPassword && (
-                <div className={`flex items-center gap-1 mt-1.5 text-sm ${
+                <div className={`flex items-center gap-1 mt-1.5 text-sm font-medium ${
                   passwordsMatch ? 'text-emerald-600' : 'text-red-600'
                 }`}>
                   {passwordsMatch ? (
@@ -136,15 +136,15 @@ export default function ChangePassword() {
                   ) : (
                     <>
                       <AlertCircle className="w-4 h-4" />
-                      <span>As senhas não coincidem</span>
+                      <span>As senhas não coincidem!</span>
                     </>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Mensagem de erro geral */}
-            {passwordError && !confirmPassword && (
+            {/* Mensagem de erro de requisitos da senha */}
+            {passwordError && passwordError !== 'As senhas não coincidem' && (
               <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{passwordError}</span>
