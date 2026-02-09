@@ -184,36 +184,76 @@ class CipolattiAPITester:
             self.log_result("Create company", False, f"Status: {status}, Response: {response}")
 
     def test_employees_crud(self):
-        """Test employees CRUD operations"""
+        """Test employees CRUD operations - verify required fields"""
         print("\n👥 Testing Employees...")
         
         # Get employees
         success, response, status = self.make_request('GET', 'employees')
         self.log_result("Get employees", success, f"Status: {status}" if not success else "")
         
-        # Create employee
+        # Get companies first to use valid company_id
+        success, companies_response, status = self.make_request('GET', 'companies')
+        if not success or not companies_response:
+            self.log_result("Get companies for employee test", False, "Need companies to test employee creation")
+            return
+            
+        company_id = companies_response[0]['id'] if companies_response else None
+        if not company_id:
+            self.log_result("Get valid company_id", False, "No companies available")
+            return
+        
+        # Test employee creation with required fields (registration_number and company_id)
         employee_data = {
             "full_name": "João da Silva Teste",
             "cpf": "123.456.789-00",
-            "email": "joao.teste@empresa.com",
-            "phone": "(11) 98888-8888",
+            "registration_number": "EMP001",  # Required field
+            "company_id": company_id,  # Required field
             "department": "TI",
             "position": "Desenvolvedor",
-            "status": "active"
+            "status": "active",
+            "facial_consent": False
         }
         
         success, response, status = self.make_request('POST', 'employees', employee_data, 200)
         
         if success and 'id' in response:
             employee_id = response['id']
-            self.log_result("Create employee", True)
+            self.log_result("Create employee with required fields", True)
             
             # Get specific employee
             success, response, status = self.make_request('GET', f'employees/{employee_id}')
             self.log_result("Get specific employee", success, f"Status: {status}" if not success else "")
             
         else:
-            self.log_result("Create employee", False, f"Status: {status}, Response: {response}")
+            self.log_result("Create employee with required fields", False, f"Status: {status}, Response: {response}")
+            
+        # Test employee creation without required registration_number (should fail)
+        employee_data_no_reg = {
+            "full_name": "Maria Silva Teste",
+            "cpf": "987.654.321-00",
+            "company_id": company_id,
+            "department": "RH",
+            "position": "Analista",
+            "status": "active",
+            "facial_consent": False
+        }
+        
+        success, response, status = self.make_request('POST', 'employees', employee_data_no_reg, 422)
+        self.log_result("Employee creation without registration_number fails", not success and status == 422, f"Expected 422, got {status}")
+        
+        # Test employee creation without required company_id (should fail)
+        employee_data_no_company = {
+            "full_name": "Pedro Santos Teste",
+            "cpf": "111.222.333-44",
+            "registration_number": "EMP002",
+            "department": "Vendas",
+            "position": "Vendedor",
+            "status": "active",
+            "facial_consent": False
+        }
+        
+        success, response, status = self.make_request('POST', 'employees', employee_data_no_company, 422)
+        self.log_result("Employee creation without company_id fails", not success and status == 422, f"Expected 422, got {status}")
 
     def test_epis_crud(self):
         """Test EPIs CRUD operations"""
