@@ -12,6 +12,28 @@ import Webcam from 'react-webcam';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Componente de Avatar com fallback para erro de carregamento
+const AvatarImage = ({ src, alt, className, fallbackClassName }) => {
+  const [hasError, setHasError] = useState(false);
+  
+  if (hasError || !src) {
+    return (
+      <div className={fallbackClassName || "w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0"}>
+        <User className="w-6 h-6 text-emerald-600" />
+      </div>
+    );
+  }
+  
+  return (
+    <img 
+      src={src} 
+      alt={alt || ""} 
+      className={className}
+      onError={() => setHasError(true)}
+    />
+  );
+};
+
 export default function Colaboradores() {
   const navigate = useNavigate();
   const [colaboradores, setColaboradores] = useState([]);
