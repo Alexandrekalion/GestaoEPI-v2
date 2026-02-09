@@ -314,6 +314,16 @@ export default function Colaboradores() {
                         audio={false}
                         screenshotFormat="image/jpeg"
                         className="w-full rounded-lg mb-3"
+                        videoConstraints={{
+                          facingMode: "user", // Câmera frontal no celular
+                          width: { ideal: 640 },
+                          height: { ideal: 480 }
+                        }}
+                        onUserMediaError={(error) => {
+                          console.error('Erro ao acessar câmera:', error);
+                          toast.error('Erro ao acessar câmera. Verifique as permissões do navegador.');
+                          setShowWebcam(false);
+                        }}
                       />
                       <div className="flex gap-3">
                         <button
