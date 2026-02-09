@@ -396,17 +396,11 @@ export default function Colaboradores() {
                     className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm"
                   >
                     <div className="flex items-start gap-4">
-                      {col.photo_path ? (
-                        <img 
-                          src={`${BACKEND_URL}${col.photo_path}`} 
-                          alt="" 
-                          className="w-16 h-16 rounded-full object-cover flex-shrink-0 border-2 border-slate-200" 
-                        />
-                      ) : (
-                        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                          <User className="w-8 h-8 text-emerald-600" />
-                        </div>
-                      )}
+                      <AvatarImage 
+                        src={col.photo_path ? `${BACKEND_URL}${col.photo_path}` : null}
+                        className="w-16 h-16 rounded-full object-cover flex-shrink-0 border-2 border-slate-200"
+                        fallbackClassName="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-900 text-lg truncate">{col.full_name}</p>
                         <p className="text-sm text-slate-500">{col.position || 'Sem cargo'}</p>
