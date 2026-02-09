@@ -45,7 +45,12 @@ export default function Colaboradores() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const webcamRef = useRef(null);
+  const importInputRef = useRef(null);
   const [formData, setFormData] = useState({
     full_name: '',
     cpf: '',
