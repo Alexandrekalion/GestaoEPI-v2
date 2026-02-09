@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Lock, Loader2 } from 'lucide-react';
+import { Lock, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ChangePassword() {
@@ -9,19 +9,39 @@ export default function ChangePassword() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
   const { changePassword } = useAuth();
   const navigate = useNavigate();
+
+  // Validar senhas em tempo real
+  useEffect(() => {
+    if (confirmPassword && newPassword !== confirmPassword) {
+      setPasswordError('As senhas não coincidem');
+    } else if (newPassword && newPassword.length < 8) {
+      setPasswordError('A senha deve ter no mínimo 8 caracteres');
+    } else if (newPassword && !/[A-Z]/.test(newPassword)) {
+      setPasswordError('A senha deve conter pelo menos uma letra maiúscula');
+    } else if (newPassword && !/[a-z]/.test(newPassword)) {
+      setPasswordError('A senha deve conter pelo menos uma letra minúscula');
+    } else if (newPassword && !/\d/.test(newPassword)) {
+      setPasswordError('A senha deve conter pelo menos um número');
+    } else if (newPassword && !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+      setPasswordError('A senha deve conter pelo menos um caractere especial (!@#$%^&*)');
+    } else {
+      setPasswordError('');
+    }
+  }, [newPassword, confirmPassword]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (newPassword !== confirmPassword) {
-      toast.error('As senhas não coincidem');
+    if (passwordError) {
+      toast.error(passwordError);
       return;
     }
 
-    if (newPassword.length < 8) {
-      toast.error('A senha deve ter no mínimo 8 caracteres');
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem');
       return;
     }
 
@@ -38,6 +58,9 @@ export default function ChangePassword() {
       setLoading(false);
     }
   };
+
+  const passwordsMatch = confirmPassword && newPassword === confirmPassword;
+  const canSubmit = !passwordError && oldPassword && newPassword && confirmPassword && passwordsMatch;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
