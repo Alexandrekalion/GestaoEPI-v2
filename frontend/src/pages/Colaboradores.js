@@ -88,6 +88,125 @@ export default function Colaboradores() {
     }
   };
 
+  // Funções de importação/exportação
+  const downloadTemplate = async () => {
+    try {
+      const response = await axios.get(`${API}/employees/template/excel`, {
+        headers: getAuthHeader(),
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'template_colaboradores.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Template baixado!');
+    } catch (error) {
+      console.error('Erro ao baixar template:', error);
+      toast.error('Erro ao baixar template');
+    }
+  };
+
+  const exportToExcel = async () => {
+    setExporting(true);
+    try {
+      const response = await axios.get(`${API}/employees/export/excel`, {
+        headers: getAuthHeader(),
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `colaboradores_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Exportação concluída!');
+    } catch (error) {
+      console.error('Erro ao exportar:', error);
+      toast.error('Erro ao exportar dados');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const exportToPDF = async () => {
+    setExporting(true);
+    try {
+      const response = await axios.get(`${API}/reports/employees/pdf`, {
+        headers: getAuthHeader(),
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `colaboradores_${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('PDF gerado!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImportFile = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImportFile(file);
+    }
+  };
+
+  const importFromExcel = async () => {
+    if (!importFile) {
+      toast.error('Selecione um arquivo Excel');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', importFile);
+      
+      const response = await axios.post(`${API}/employees/import/excel`, formData, {
+        headers: {
+          ...getAuthHeader(),
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      const { imported, errors, skipped } = response.data;
+      
+      if (imported > 0) {
+        toast.success(`${imported} colaborador(es) importado(s) com sucesso!`);
+      }
+      if (skipped > 0) {
+        toast.warning(`${skipped} registro(s) ignorado(s) (duplicados)`);
+      }
+      if (errors.length > 0) {
+        const errorMsg = errors.slice(0, 3).map(e => `Linha ${e.row}: ${e.errors.join(', ')}`).join('\n');
+        toast.error(`Erros encontrados:\n${errorMsg}${errors.length > 3 ? `\n... e mais ${errors.length - 3} erro(s)` : ''}`);
+      }
+      
+      setShowImportDialog(false);
+      setImportFile(null);
+      fetchData();
+    } catch (error) {
+      console.error('Erro ao importar:', error);
+      toast.error(error.response?.data?.detail || 'Erro ao importar arquivo');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const filterColaboradores = () => {
     if (!searchTerm.trim()) {
       setFilteredColaboradores(colaboradores);
