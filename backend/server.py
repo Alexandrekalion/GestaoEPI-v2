@@ -417,6 +417,458 @@ async def upload_employee_photo(employee_id: str, file: UploadFile = File(...), 
     await db.employees.update_one({"_id": ObjectId(employee_id)}, {"$set": {"photo_path": photo_path}})
     return {'photo_path': photo_path}
 
+# ===================== IMPORTAÇÃO/EXPORTAÇÃO =====================
+
+@api_router.get('/employees/export/excel')
+async def export_employees_excel(current_user: dict = Depends(get_current_user)):
+    """Exporta colaboradores para Excel"""
+    if not can_manage_employees(current_user['role']):
+        raise HTTPException(status_code=403, detail='Permissão insuficiente')
+    
+    db = await get_db()
+    employees = await db.employees.find().to_list(5000)
+    companies = {str(c['_id']): c['legal_name'] async for c in db.companies.find()}
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Colaboradores"
+    
+    # Cabeçalho
+    headers = ['Nome Completo', 'CPF', 'RG', 'Matrícula', 'Empresa', 'Cargo', 'Setor', 'Status']
+    header_fill = PatternFill(start_color="10B981", end_color="10B981", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF")
+    
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center')
+    
+    # Dados
+    for row, emp in enumerate(employees, 2):
+        ws.cell(row=row, column=1, value=emp.get('full_name', ''))
+        ws.cell(row=row, column=2, value=emp.get('cpf', ''))
+        ws.cell(row=row, column=3, value=emp.get('rg', ''))
+        ws.cell(row=row, column=4, value=emp.get('registration_number', ''))
+        ws.cell(row=row, column=5, value=companies.get(emp.get('company_id', ''), ''))
+        ws.cell(row=row, column=6, value=emp.get('position', ''))
+        ws.cell(row=row, column=7, value=emp.get('department', ''))
+        ws.cell(row=row, column=8, value='Ativo' if emp.get('status') == 'active' else 'Inativo')
+    
+    # Ajustar largura das colunas
+    for col in ws.columns:
+        max_length = max(len(str(cell.value or '')) for cell in col)
+        ws.column_dimensions[col[0].column_letter].width = max_length + 2
+    
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment; filename=colaboradores_{datetime.now().strftime("%Y%m%d")}.xlsx'}
+    )
+
+@api_router.get('/employees/template/excel')
+async def download_employees_template(current_user: dict = Depends(get_current_user)):
+    """Download do template Excel para importação de colaboradores"""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Colaboradores"
+    
+    # Cabeçalho com instruções
+    headers = ['Nome Completo*', 'CPF*', 'RG', 'Matrícula*', 'Empresa*', 'Cargo', 'Setor', 'Status']
+    header_fill = PatternFill(start_color="10B981", end_color="10B981", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF")
+    
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center')
+    
+    # Exemplo de preenchimento
+    ws.cell(row=2, column=1, value='João da Silva')
+    ws.cell(row=2, column=2, value='123.456.789-00')
+    ws.cell(row=2, column=3, value='12.345.678-9')
+    ws.cell(row=2, column=4, value='MAT001')
+    ws.cell(row=2, column=5, value='Nome da Empresa')
+    ws.cell(row=2, column=6, value='Operador')
+    ws.cell(row=2, column=7, value='Produção')
+    ws.cell(row=2, column=8, value='Ativo')
+    
+    # Instruções
+    ws2 = wb.create_sheet(title="Instruções")
+    ws2.cell(row=1, column=1, value="INSTRUÇÕES DE PREENCHIMENTO").font = Font(bold=True, size=14)
+    ws2.cell(row=3, column=1, value="* Campos obrigatórios")
+    ws2.cell(row=4, column=1, value="• Nome Completo: Nome completo do colaborador")
+    ws2.cell(row=5, column=1, value="• CPF: Formato XXX.XXX.XXX-XX ou apenas números")
+    ws2.cell(row=6, column=1, value="• Matrícula: Código único do colaborador na empresa")
+    ws2.cell(row=7, column=1, value="• Empresa: Nome exato da empresa cadastrada no sistema")
+    ws2.cell(row=8, column=1, value="• Status: 'Ativo' ou 'Inativo' (padrão: Ativo)")
+    
+    for col in ws.columns:
+        max_length = max(len(str(cell.value or '')) for cell in col)
+        ws.column_dimensions[col[0].column_letter].width = max_length + 2
+    
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment; filename=template_colaboradores.xlsx'}
+    )
+
+@api_router.post('/employees/import/excel')
+async def import_employees_excel(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Importa colaboradores de um arquivo Excel"""
+    if not can_manage_employees(current_user['role']):
+        raise HTTPException(status_code=403, detail='Permissão insuficiente')
+    
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail='Arquivo deve ser Excel (.xlsx ou .xls)')
+    
+    db = await get_db()
+    
+    # Carregar empresas
+    companies = {}
+    async for company in db.companies.find():
+        companies[company['legal_name'].lower().strip()] = str(company['_id'])
+    
+    try:
+        content = await file.read()
+        wb = load_workbook(io.BytesIO(content))
+        ws = wb.active
+        
+        results = {'imported': 0, 'errors': [], 'skipped': 0}
+        
+        for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), 2):
+            if not row or not row[0]:  # Linha vazia
+                continue
+            
+            full_name = str(row[0]).strip() if row[0] else None
+            cpf = str(row[1]).strip() if row[1] else None
+            rg = str(row[2]).strip() if row[2] else None
+            registration_number = str(row[3]).strip() if row[3] else None
+            company_name = str(row[4]).strip().lower() if row[4] else None
+            position = str(row[5]).strip() if len(row) > 5 and row[5] else None
+            department = str(row[6]).strip() if len(row) > 6 and row[6] else None
+            status_str = str(row[7]).strip().lower() if len(row) > 7 and row[7] else 'ativo'
+            
+            # Validações
+            errors = []
+            if not full_name:
+                errors.append('Nome é obrigatório')
+            if not cpf:
+                errors.append('CPF é obrigatório')
+            if not registration_number:
+                errors.append('Matrícula é obrigatória')
+            if not company_name:
+                errors.append('Empresa é obrigatória')
+            elif company_name not in companies:
+                errors.append(f'Empresa "{row[4]}" não encontrada no sistema')
+            
+            if errors:
+                results['errors'].append({'row': row_num, 'errors': errors, 'name': full_name})
+                continue
+            
+            # Verificar se já existe
+            existing = await db.employees.find_one({
+                "$or": [
+                    {"cpf": cpf},
+                    {"registration_number": registration_number, "company_id": companies.get(company_name)}
+                ]
+            })
+            
+            if existing:
+                results['skipped'] += 1
+                results['errors'].append({
+                    'row': row_num, 
+                    'errors': ['Colaborador já existe (CPF ou Matrícula duplicada)'],
+                    'name': full_name
+                })
+                continue
+            
+            # Inserir colaborador
+            employee = {
+                'full_name': full_name,
+                'cpf': cpf,
+                'rg': rg,
+                'registration_number': registration_number,
+                'company_id': companies.get(company_name),
+                'position': position,
+                'department': department,
+                'status': 'active' if status_str == 'ativo' else 'inactive',
+                'facial_consent': False,
+                'created_at': datetime.now(timezone.utc),
+                'updated_at': datetime.now(timezone.utc)
+            }
+            
+            await db.employees.insert_one(employee)
+            results['imported'] += 1
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Erro ao importar Excel: {str(e)}")
+        raise HTTPException(status_code=400, detail=f'Erro ao processar arquivo: {str(e)}')
+
+# ===================== IMPRESSÃO PDF =====================
+
+@api_router.get('/reports/employees/pdf')
+async def generate_employees_pdf(current_user: dict = Depends(get_current_user)):
+    """Gera relatório PDF de colaboradores"""
+    if not can_view_sensitive_data(current_user['role']):
+        raise HTTPException(status_code=403, detail='Permissão insuficiente')
+    
+    db = await get_db()
+    employees = await db.employees.find({"status": "active"}).to_list(5000)
+    companies = {str(c['_id']): c['legal_name'] async for c in db.companies.find()}
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=20, leftMargin=20, topMargin=30, bottomMargin=30)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=16, alignment=1, spaceAfter=20)
+    
+    elements = []
+    
+    # Título
+    elements.append(Paragraph("Relatório de Colaboradores", title_style))
+    elements.append(Paragraph(f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+    
+    # Tabela
+    data = [['Nome', 'CPF', 'Matrícula', 'Empresa', 'Cargo', 'Setor']]
+    
+    for emp in employees:
+        data.append([
+            emp.get('full_name', '')[:30],
+            emp.get('cpf', ''),
+            emp.get('registration_number', ''),
+            companies.get(emp.get('company_id', ''), '')[:25],
+            (emp.get('position', '') or '')[:20],
+            (emp.get('department', '') or '')[:15]
+        ])
+    
+    table = Table(data, colWidths=[120, 90, 70, 120, 100, 80])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.063, 0.725, 0.506)),  # Emerald
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
+    ]))
+    
+    elements.append(table)
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph(f"Total de colaboradores ativos: {len(employees)}", styles['Normal']))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    return StreamingResponse(
+        buffer,
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename=colaboradores_{datetime.now().strftime("%Y%m%d")}.pdf'}
+    )
+
+@api_router.get('/reports/deliveries/pdf')
+async def generate_deliveries_pdf(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Gera relatório PDF de entregas"""
+    db = await get_db()
+    
+    query = {}
+    if start_date:
+        query['created_at'] = {'$gte': datetime.fromisoformat(start_date.replace('Z', '+00:00'))}
+    if end_date:
+        if 'created_at' not in query:
+            query['created_at'] = {}
+        query['created_at']['$lte'] = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+    
+    deliveries = await db.deliveries.find(query).sort('created_at', -1).to_list(1000)
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=20, leftMargin=20, topMargin=30, bottomMargin=30)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=16, alignment=1, spaceAfter=20)
+    
+    elements = []
+    
+    # Título
+    elements.append(Paragraph("Relatório de Entregas de EPIs", title_style))
+    elements.append(Paragraph(f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+    
+    # Tabela
+    data = [['Data', 'Colaborador', 'Itens', 'Tipo', 'Verificação Facial']]
+    
+    for delivery in deliveries:
+        items_str = ', '.join([
+            f"{item.get('quantity', 1)}x {item.get('epi_name', item.get('kit_name', 'Item'))}"
+            for item in delivery.get('items', [])
+        ])[:50]
+        
+        facial_match = delivery.get('facial_match_score')
+        facial_str = f"{int(facial_match * 100)}%" if facial_match else 'N/A'
+        
+        data.append([
+            delivery.get('created_at', datetime.now()).strftime('%d/%m/%Y %H:%M'),
+            delivery.get('employee_name', '')[:25],
+            items_str,
+            'Devolução' if delivery.get('is_return') else 'Entrega',
+            facial_str
+        ])
+    
+    table = Table(data, colWidths=[100, 150, 200, 70, 80])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.063, 0.725, 0.506)),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
+    ]))
+    
+    elements.append(table)
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph(f"Total de entregas: {len(deliveries)}", styles['Normal']))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    return StreamingResponse(
+        buffer,
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename=entregas_{datetime.now().strftime("%Y%m%d")}.pdf'}
+    )
+
+@api_router.get('/reports/employee/{employee_id}/pdf')
+async def generate_employee_history_pdf(employee_id: str, current_user: dict = Depends(get_current_user)):
+    """Gera PDF com ficha do colaborador e histórico de entregas"""
+    db = await get_db()
+    
+    employee = await db.employees.find_one({"_id": ObjectId(employee_id)})
+    if not employee:
+        raise HTTPException(status_code=404, detail='Colaborador não encontrado')
+    
+    company = None
+    if employee.get('company_id'):
+        company = await db.companies.find_one({"_id": ObjectId(employee['company_id'])})
+    
+    deliveries = await db.deliveries.find({"employee_id": employee_id}).sort('created_at', -1).to_list(500)
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=40, bottomMargin=40)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, alignment=1, spaceAfter=20)
+    subtitle_style = ParagraphStyle('Subtitle', parent=styles['Heading2'], fontSize=14, spaceAfter=10)
+    
+    elements = []
+    
+    # Cabeçalho
+    elements.append(Paragraph("Ficha do Colaborador", title_style))
+    elements.append(Spacer(1, 10))
+    
+    # Dados do colaborador
+    info_data = [
+        ['Nome:', employee.get('full_name', '')],
+        ['CPF:', employee.get('cpf', '')],
+        ['RG:', employee.get('rg', '') or '-'],
+        ['Matrícula:', employee.get('registration_number', '')],
+        ['Empresa:', company.get('legal_name', '') if company else '-'],
+        ['Cargo:', employee.get('position', '') or '-'],
+        ['Setor:', employee.get('department', '') or '-'],
+        ['Status:', 'Ativo' if employee.get('status') == 'active' else 'Inativo'],
+    ]
+    
+    info_table = Table(info_data, colWidths=[100, 350])
+    info_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+    ]))
+    
+    elements.append(info_table)
+    elements.append(Spacer(1, 30))
+    
+    # Histórico de entregas
+    elements.append(Paragraph("Histórico de Entregas/Devoluções", subtitle_style))
+    
+    if deliveries:
+        history_data = [['Data', 'Tipo', 'Itens', 'Verificação']]
+        
+        for delivery in deliveries:
+            items_str = ', '.join([
+                f"{item.get('quantity', 1)}x {item.get('epi_name', item.get('kit_name', 'Item'))}"
+                for item in delivery.get('items', [])
+            ])[:60]
+            
+            facial_match = delivery.get('facial_match_score')
+            facial_str = f"{int(facial_match * 100)}%" if facial_match else '-'
+            
+            history_data.append([
+                delivery.get('created_at', datetime.now()).strftime('%d/%m/%Y'),
+                'Devolução' if delivery.get('is_return') else 'Entrega',
+                items_str,
+                facial_str
+            ])
+        
+        history_table = Table(history_data, colWidths=[80, 70, 250, 60])
+        history_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.063, 0.725, 0.506)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
+        ]))
+        
+        elements.append(history_table)
+    else:
+        elements.append(Paragraph("Nenhuma entrega registrada.", styles['Normal']))
+    
+    elements.append(Spacer(1, 40))
+    elements.append(Paragraph(f"Documento gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    return StreamingResponse(
+        buffer,
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename=ficha_{employee.get("registration_number", employee_id)}_{datetime.now().strftime("%Y%m%d")}.pdf'}
+    )
+
 # ===================== FACIAL TEMPLATES =====================
 
 @api_router.get('/employees/{employee_id}/facial-templates')
