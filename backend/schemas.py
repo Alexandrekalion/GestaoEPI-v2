@@ -221,7 +221,7 @@ class EmployeePublicResponse(BaseModel):
 
 class SupplierCreate(BaseModel):
     name: str
-    cnpj: Optional[str] = None
+    cnpj: str  # CNPJ obrigatório
     contact: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[EmailStr] = None
