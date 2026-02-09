@@ -373,6 +373,13 @@ class CipolattiAPITester:
         success, response, status = self.make_request('GET', 'kits')
         self.log_result("Get kits", success, f"Status: {status}" if not success else "")
 
+    def test_deliveries(self):
+        """Test deliveries"""
+        print("\n🚚 Testing Deliveries...")
+        
+        success, response, status = self.make_request('GET', 'deliveries')
+        self.log_result("Get deliveries", success, f"Status: {status}" if not success else "")
+
     def test_excel_pdf_features(self):
         """Test Excel and PDF export/import features"""
         print("\n📄 Testing Excel/PDF Features...")
