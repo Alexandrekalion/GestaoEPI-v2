@@ -290,7 +290,7 @@ export default function Colaboradores() {
                   ) : null}
                   
                   {!showWebcam && !photoPreview && (
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                       <button
                         type="button"
                         onClick={() => setShowWebcam(true)}
@@ -303,6 +303,18 @@ export default function Colaboradores() {
                         <Upload className="w-4 h-4" />
                         Upload Foto
                         <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                      </label>
+                      {/* Opção para tirar foto diretamente no celular */}
+                      <label className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 cursor-pointer sm:hidden">
+                        <Camera className="w-4 h-4" />
+                        Tirar Foto
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="user" 
+                          onChange={handleFileUpload} 
+                          className="hidden" 
+                        />
                       </label>
                     </div>
                   )}
