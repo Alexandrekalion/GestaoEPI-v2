@@ -451,13 +451,11 @@ export default function Colaboradores() {
                     <tr key={col.id} className="hover:bg-slate-50">
                       <td className="px-4 lg:px-6 py-4">
                         <div className="flex items-center gap-3">
-                          {col.photo_path ? (
-                            <img src={`${BACKEND_URL}${col.photo_path}`} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-slate-200" />
-                          ) : (
-                            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <User className="w-6 h-6 text-emerald-600" />
-                            </div>
-                          )}
+                          <AvatarImage 
+                            src={col.photo_path ? `${BACKEND_URL}${col.photo_path}` : null}
+                            className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-slate-200"
+                            fallbackClassName="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0"
+                          />
                           <div className="min-w-0">
                             <p className="font-medium text-slate-900 truncate">{col.full_name}</p>
                             <p className="text-sm text-slate-500 truncate">{col.email || '-'}</p>
