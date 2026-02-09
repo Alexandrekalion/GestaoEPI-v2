@@ -500,9 +500,13 @@ class CipolattiAPITester:
         self.test_stock_alerts()
         self.test_users_management()
         self.test_suppliers()
-        self.test_tools()
         self.test_kits()
         self.test_deliveries()
+        
+        # New features tests
+        self.test_excel_pdf_features()
+        self.test_rbac_permissions()
+        self.test_rbac_rh_restrictions()
         
         # Print summary
         print(f"\n📊 Test Summary:")
