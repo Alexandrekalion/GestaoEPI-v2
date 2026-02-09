@@ -548,7 +548,83 @@ export default function Colaboradores() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
+
+        {/* Dialog de Importação */}
+        <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Importar Colaboradores</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <p className="text-sm text-slate-600">
+                Faça upload de um arquivo Excel (.xlsx) com os dados dos colaboradores.
+                Use o template para garantir o formato correto.
+              </p>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Baixar Template
+                </Button>
+              </div>
+              
+              <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center">
+                {importFile ? (
+                  <div className="space-y-2">
+                    <FileText className="w-8 h-8 text-emerald-500 mx-auto" />
+                    <p className="text-sm font-medium">{importFile.name}</p>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setImportFile(null)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      Remover
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer">
+                    <FileUp className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600">Clique para selecionar arquivo</p>
+                    <p className="text-xs text-slate-400 mt-1">Apenas .xlsx ou .xls</p>
+                    <input 
+                      type="file" 
+                      accept=".xlsx,.xls" 
+                      onChange={handleImportFile}
+                      className="hidden"
+                      ref={importInputRef}
+                    />
+                  </label>
+                )}
+              </div>
+              
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => { setShowImportDialog(false); setImportFile(null); }}>
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={importFromExcel} 
+                  disabled={!importFile || importing}
+                  className="bg-emerald-500 hover:bg-emerald-600"
+                >
+                  {importing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Importando...
+                    </>
+                  ) : (
+                    <>
+                      <FileUp className="w-4 h-4 mr-2" />
+                      Importar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
           <div className="p-4 border-b border-slate-200">
