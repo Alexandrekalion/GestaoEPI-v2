@@ -29,7 +29,11 @@ export default function Login() {
       if (error.response?.status === 403) {
         toast.error('Licença expirada. Contate o administrador.');
       } else if (error.response?.status === 401) {
-        toast.error('Credenciais inválidas');
+        toast.error('Usuário ou senha incorretos. Verifique suas credenciais.');
+      } else if (error.message?.includes('Network Error') || error.code === 'ERR_NETWORK') {
+        toast.error('Erro de conexão com o servidor. Verifique sua internet e tente novamente.');
+      } else if (error.message) {
+        toast.error(error.message);
       } else {
         toast.error('Erro ao fazer login. Tente novamente.');
       }
