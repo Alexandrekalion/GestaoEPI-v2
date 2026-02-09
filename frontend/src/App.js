@@ -37,6 +37,7 @@ function AppRoutes() {
       <Route path="/change-password" element={<PrivateRoute><ChangePassword /></PrivateRoute>} />
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/entrega-epi" element={<PrivateRoute><EntregaEPI /></PrivateRoute>} />
+      <Route path="/historico-entregas" element={<PrivateRoute><HistoricoEntregas /></PrivateRoute>} />
       <Route path="/colaboradores" element={<PrivateRoute><Colaboradores /></PrivateRoute>} />
       <Route path="/colaboradores/:id" element={<PrivateRoute><ColaboradorDetalhes /></PrivateRoute>} />
       <Route path="/empresas" element={<PrivateRoute><Empresas /></PrivateRoute>} />
