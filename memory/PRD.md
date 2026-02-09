@@ -17,14 +17,16 @@ Sistema de Gestão de EPI (Equipamentos de Proteção Individual) - Cipolatti
 3. ✅ CNPJ obrigatório no cadastro de fornecedor
 4. ✅ Dashboard redireciona corretamente para histórico de entregas dos últimos 30 dias
 
-### Sessão 2 - Correções de Bugs (09/02/2026)
-1. ✅ **Erro de Login**: Corrigida race condition no login - agora busca dados do usuário antes de navegar
-2. ✅ **Foto do colaborador**: Adicionado componente AvatarImage com fallback para quando a imagem não carrega
-3. ✅ **Validação de senha**: Validação em tempo real na troca de senha com feedback visual
-4. ✅ **Webcam celular**: Melhorado suporte para captura de foto em dispositivos móveis
+### Sessão 2 - Correções de Bugs de Login (09/02/2026)
+1. ✅ **Erro de Login Corrigido**: Token só é salvo após validação completa da sessão
+2. ✅ **Mensagens de erro melhoradas**: Erros específicos para credenciais inválidas, erro de rede, etc
+3. ✅ **Validação de senha em tempo real**: Mensagem "As senhas não coincidem!" aparece imediatamente com destaque visual vermelho
+4. ✅ **Feedback positivo**: Mensagem "Senhas coincidem" em verde quando senhas são iguais
+5. ✅ **Foto do colaborador**: Avatar padrão quando imagem não carrega
 
 ## Credenciais de Acesso
 - **Admin**: administrador / LR1a2b3c4567@
+- **Teste**: teste_troca / Teste123@ (precisa trocar senha)
 
 ## O Que Foi Implementado
 - Sistema de login com JWT
@@ -42,6 +44,7 @@ Sistema de Gestão de EPI (Equipamentos de Proteção Individual) - Cipolatti
 - 🔵 P3: Notificações de estoque baixo por email
 
 ## Arquivos Modificados na Última Sessão
-- `/app/frontend/src/contexts/AuthContext.js` - Fix login race condition
-- `/app/frontend/src/pages/ChangePassword.js` - Validação em tempo real
-- `/app/frontend/src/pages/Colaboradores.js` - Avatar com fallback, suporte webcam celular
+- `/app/frontend/src/contexts/AuthContext.js` - Token só salva após validação
+- `/app/frontend/src/pages/Login.js` - Mensagens de erro melhoradas
+- `/app/frontend/src/pages/ChangePassword.js` - Validação visual em tempo real
+- `/app/frontend/src/pages/Colaboradores.js` - Avatar com fallback
