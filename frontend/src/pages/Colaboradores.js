@@ -458,7 +458,7 @@ export default function Colaboradores() {
                           />
                           <div className="min-w-0">
                             <p className="font-medium text-slate-900 truncate">{col.full_name}</p>
-                            <p className="text-sm text-slate-500 truncate">{col.email || '-'}</p>
+                            <p className="text-sm text-slate-500 truncate">{col.position || col.department || '-'}</p>
                           </div>
                         </div>
                       </td>
