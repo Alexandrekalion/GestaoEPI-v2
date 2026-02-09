@@ -179,8 +179,6 @@ class EmployeeUpdate(BaseModel):
     full_name: Optional[str] = None
     rg: Optional[str] = None
     birth_date: Optional[datetime] = None
-    phone: Optional[str] = None
-    email: Optional[EmailStr] = None
     address: Optional[str] = None
     registration_number: Optional[str] = None
     company_id: Optional[str] = None
