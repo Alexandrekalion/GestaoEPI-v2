@@ -194,8 +194,6 @@ class EmployeeResponse(BaseModel):
     cpf: str
     rg: Optional[str] = None
     birth_date: Optional[datetime] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
     address: Optional[str] = None
     registration_number: Optional[str] = None
     company_id: Optional[str] = None
