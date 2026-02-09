@@ -18,33 +18,54 @@ Sistema de Gestão de EPI (Equipamentos de Proteção Individual) - Cipolatti
 4. ✅ Dashboard redireciona corretamente para histórico de entregas dos últimos 30 dias
 
 ### Sessão 2 - Correções de Bugs de Login (09/02/2026)
-1. ✅ **Erro de Login Corrigido**: Token só é salvo após validação completa da sessão
-2. ✅ **Mensagens de erro melhoradas**: Erros específicos para credenciais inválidas, erro de rede, etc
-3. ✅ **Validação de senha em tempo real**: Mensagem "As senhas não coincidem!" aparece imediatamente com destaque visual vermelho
-4. ✅ **Feedback positivo**: Mensagem "Senhas coincidem" em verde quando senhas são iguais
-5. ✅ **Foto do colaborador**: Avatar padrão quando imagem não carrega
+1. ✅ Erro de Login Corrigido: Token só é salvo após validação completa da sessão
+2. ✅ Mensagens de erro melhoradas: Erros específicos para credenciais inválidas, erro de rede
+3. ✅ Validação de senha em tempo real: Mensagem visual quando senhas não coincidem
+4. ✅ Foto do colaborador: Avatar padrão quando imagem não carrega
+
+### Sessão 3 - Funcionalidades de Impressão e Importação (09/02/2026)
+1. ✅ **Exportação Excel**: 
+   - Exportar lista de colaboradores para Excel
+   - Download de template para importação
+2. ✅ **Importação Excel**:
+   - Upload de arquivo Excel com colaboradores
+   - Validação de campos obrigatórios
+   - Verificação de duplicados (CPF/Matrícula)
+   - Relatório de erros por linha
+3. ✅ **Geração de PDF**:
+   - Relatório de colaboradores ativos
+   - Relatório de entregas (com filtro de data)
+   - Ficha individual do colaborador com histórico
+4. ✅ **RBAC Testado**:
+   - Admin: acesso total
+   - RH: gerencia colaboradores/empresas, mas NÃO cria admin
+   - Gestor: acesso operacional, entregas de EPIs
 
 ## Credenciais de Acesso
 - **Admin**: administrador / LR1a2b3c4567@
-- **Teste**: teste_troca / Teste123@ (precisa trocar senha)
 
-## O Que Foi Implementado
-- Sistema de login com JWT
-- Cadastro de colaboradores com foto
-- Cadastro de EPIs
-- Cadastro de fornecedores
-- Entrega de EPIs com reconhecimento facial
-- Dashboard com estatísticas
-- Histórico de entregas
+## Perfis de Acesso (RBAC)
+| Perfil | Colaboradores | EPIs | Entregas | Usuários | Admin |
+|--------|--------------|------|----------|----------|-------|
+| Admin | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Gestor | ✅ | ✅ | ✅ | ❌ | ❌ |
+| RH | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Seg. Trabalho | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Almoxarifado | ❌ | ❌ | ✅ | ❌ | ❌ |
+
+## Endpoints de Importação/Exportação
+- `GET /api/employees/template/excel` - Download template
+- `POST /api/employees/import/excel` - Importar colaboradores
+- `GET /api/employees/export/excel` - Exportar para Excel
+- `GET /api/reports/employees/pdf` - Relatório PDF de colaboradores
+- `GET /api/reports/deliveries/pdf` - Relatório PDF de entregas
+- `GET /api/reports/employee/{id}/pdf` - Ficha do colaborador
 
 ## Backlog / Próximos Passos
-- 🟡 P1: Teste completo RBAC (perfis RH e Gestor)
-- 🟢 P2: Funcionalidade de Impressão
-- 🟢 P2: Importação de Colaboradores via Excel
 - 🔵 P3: Notificações de estoque baixo por email
+- 🔵 P3: Relatórios de EPIs vencidos
+- 🔵 P3: Dashboard com gráficos interativos
 
 ## Arquivos Modificados na Última Sessão
-- `/app/frontend/src/contexts/AuthContext.js` - Token só salva após validação
-- `/app/frontend/src/pages/Login.js` - Mensagens de erro melhoradas
-- `/app/frontend/src/pages/ChangePassword.js` - Validação visual em tempo real
-- `/app/frontend/src/pages/Colaboradores.js` - Avatar com fallback
+- `/app/backend/server.py` - Novos endpoints de importação/exportação/PDF
+- `/app/frontend/src/pages/Colaboradores.js` - Botões e dialog de importação
