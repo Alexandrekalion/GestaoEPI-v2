@@ -32,8 +32,6 @@ export default function Colaboradores() {
     company_id: '',
     position: '',
     department: '',
-    phone: '',
-    email: '',
     status: 'active',
     facial_consent: false
   });
@@ -134,8 +132,6 @@ export default function Colaboradores() {
       company_id: '',
       position: '',
       department: '',
-      phone: '',
-      email: '',
       status: 'active',
       facial_consent: false
     });
@@ -211,20 +207,24 @@ export default function Colaboradores() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Matrícula</label>
+                    <label className="block text-sm font-medium mb-1">Matrícula *</label>
                     <input
                       type="text"
+                      required
                       value={formData.registration_number}
                       onChange={(e) => setFormData({...formData, registration_number: e.target.value})}
                       className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                      data-testid="input-registration-number"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Empresa</label>
+                    <label className="block text-sm font-medium mb-1">Empresa *</label>
                     <select
+                      required
                       value={formData.company_id}
                       onChange={(e) => setFormData({...formData, company_id: e.target.value})}
                       className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                      data-testid="input-company-id"
                     >
                       <option value="">Selecione...</option>
                       {empresas.map(emp => (
