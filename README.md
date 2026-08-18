@@ -75,4 +75,4 @@ O projeto demonstra experiencia em desenvolvimento full stack, regras de negocio
 
 ## Autoria
 
-Desenvolvido por Michele Santana — Kalion Tecnologia
+Desenvolvido por Alexandre Santana dos Santos — Kalion Tecnologia
